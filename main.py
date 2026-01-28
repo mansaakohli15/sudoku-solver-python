@@ -1,18 +1,10 @@
-from solver import solve
+from image_reader import load_and_preprocess, find_biggest_contour
+import cv2
 
-board = [
-    [5,3,0,0,7,0,0,0,0],
-    [6,0,0,1,9,5,0,0,0],
-    [0,9,8,0,0,0,0,6,0],
-    [8,0,0,0,6,0,0,0,3],
-    [4,0,0,8,0,3,0,0,1],
-    [7,0,0,0,2,0,0,0,6],
-    [0,6,0,0,0,0,2,8,0],
-    [0,0,0,4,1,9,0,0,5],
-    [0,0,0,0,8,0,0,7,9]
-]
+img, thresh = load_and_preprocess(r"C:\Users\Asus\Downloads\sudoku.png")
+grid = find_biggest_contour(thresh)
 
-solve(board)
+cv2.drawContours(img, [grid], -1, (0,255,0), 3)
+cv2.imshow("Detected Sudoku", img)
+cv2.waitKey(0)
 
-for row in board:
-    print(row)
