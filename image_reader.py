@@ -72,3 +72,42 @@ def split_cells(warped):
             ]
             cells.append(cell)
     return cells
+
+def preprocess_cell(cell):
+    gray = cv2.cvtColor(cell, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (3,3), 0)
+    thresh = cv2.adaptiveThreshold(
+        blur, 255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY_INV,
+        11, 2
+    )
+    return thresh
+
+def cell_has_digit(thresh_cell):
+    total_pixels = thresh_cell.shape[0] * thresh_cell.shape[1]
+    white_pixels = cv2.countNonZero(thresh_cell)
+
+    if white_pixels > total_pixels * 0.05:
+        return True
+    else:
+        return False
+
+def extract_digit(thresh_cell):
+    contours, _ = cv2.findContours(
+        thresh_cell, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
+
+    if len(contours) == 0:
+        return None
+
+    # get largest contour (digit)
+    largest = max(contours, key=cv2.contourArea)
+    x, y, w, h = cv2.boundingRect(largest)
+
+    digit = thresh_cell[y:y+h, x:x+w]
+    return digit
+
+def resize_digit(digit):
+    digit = cv2.resize(digit, (28, 28))
+    return digit
