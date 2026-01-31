@@ -25,3 +25,50 @@ def find_biggest_contour(thresh):
                 biggest = approx
                 max_area = area
     return biggest
+
+def warp_perspective(img, contour):
+    pts = contour.reshape(4,2)
+
+    # order points: top-left, top-right, bottom-right, bottom-left
+    s = pts.sum(axis=1)
+    diff = np.diff(pts, axis=1)
+
+    tl = pts[np.argmin(s)]
+    br = pts[np.argmax(s)]
+    tr = pts[np.argmin(diff)]
+    bl = pts[np.argmax(diff)]
+
+    ordered = np.array([tl, tr, br, bl], dtype="float32")
+
+    side = max(
+        np.linalg.norm(br - tr),
+        np.linalg.norm(tr - tl),
+        np.linalg.norm(tl - bl),
+        np.linalg.norm(bl - br)
+    )
+
+    dst = np.array([
+        [0,0],
+        [side-1,0],
+        [side-1,side-1],
+        [0,side-1]
+    ], dtype="float32")
+
+    matrix = cv2.getPerspectiveTransform(ordered, dst)
+    warped = cv2.warpPerspective(img, matrix, (int(side), int(side)))
+    return warped
+
+def split_cells(warped):
+    cells = []
+    h, w = warped.shape[:2]
+    cell_h = h // 9
+    cell_w = w // 9
+
+    for i in range(9):
+        for j in range(9):
+            cell = warped[
+                i*cell_h:(i+1)*cell_h,
+                j*cell_w:(j+1)*cell_w
+            ]
+            cells.append(cell)
+    return cells
